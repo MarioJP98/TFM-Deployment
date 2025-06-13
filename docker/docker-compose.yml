@@ -28,3 +28,7 @@ services:
       - SPARK_USER=spark
     depends_on:
       - spark
+  
+  django:
+  
+
