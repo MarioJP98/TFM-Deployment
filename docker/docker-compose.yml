@@ -29,6 +29,4 @@ services:
     depends_on:
       - spark
   
-  django:
-  
 
