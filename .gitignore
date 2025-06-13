@@ -49,6 +49,7 @@ postgres_data/
 
 # Env files
 .env
+*.env
 
 # Coverage reports
 htmlcov/
