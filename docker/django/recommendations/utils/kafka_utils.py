@@ -1,5 +1,6 @@
 import json
 from kafka import KafkaProducer
+import hashlib
 
 # Configuración del broker Kafka
 KAFKA_BROKER = 'broker:29092'  # Si estás dentro de docker-compose
@@ -35,6 +36,19 @@ def validate_features(features: dict):
     if missing_fields:
         raise InvalidPayloadError(f"Missing fields in features: {missing_fields}")
 
+def generate_song_id(track_name, artist_name):
+    # Concatenamos nombre de canción + artista
+    combined_str = f"{track_name}-{artist_name}"
+    
+    # Calculamos el hash SHA1 (u otro)
+    sha1_hash = hashlib.sha1(combined_str.encode('utf-8')).hexdigest()
+    
+    # Lo acortamos a 16 caracteres estilo dataset
+    song_id = sha1_hash[:16].upper()
+    
+    return song_id
+    
+
 def publish_song_features(features: dict):
     """
     Publica el diccionario de features a Kafka tras validarlo.
@@ -46,8 +60,17 @@ def publish_song_features(features: dict):
         # Inicialización lazy del productor
         producer = get_kafka_producer()
 
+        # Definimos la key (por ejemplo el nombre de la canción + artista)
+        
+        song_id =  f"{features['track_name']}".encode('utf-8')
+        song_id = generate_song_id(features['track_name'], features['artist']).encode('utf-8')
+
         # Envío del mensaje
-        producer.send(TOPIC_NAME, features)
+        producer.send(
+            TOPIC_NAME,
+            key = song_id,
+            value = features
+        )
         producer.flush()
 
         print("Features enviados correctamente a Kafka.")

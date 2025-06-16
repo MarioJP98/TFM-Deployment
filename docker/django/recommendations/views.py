@@ -13,8 +13,22 @@ def recommend_view(request):
         song_name = request.POST.get('song_name', '')
 
         try:
-            features = spotify_feature_extractor(song_name)
+            # Extract fetures from the spotify API
+            # features = spotify_feature_extractor(song_name)
+            features = {
+                "track_name": "Blinding Lights",
+                "artist": "The Weeknd",
+                "tempo": 171.005,
+                "loudness": -4.999,
+                "duration": 200.512,
+                "key": 1,
+                "mode": 1,
+                "time_signature": 4
+            }
+
+            # Publish the features to Kafka
             publish_song_features(features)
+
             return render(request, "recommendations/success.html", {"features": features})
 
         except SongNotFoundError:
