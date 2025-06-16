@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+#Kafka
+kafka-data/
+
 # Django stuff:
 *.log
 local_settings.py
