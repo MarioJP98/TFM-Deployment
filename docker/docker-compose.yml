@@ -1,32 +1,117 @@
 services:
-  spark:
-    image: bitnami/spark:3.5.1
+
+  # PostgreSQL para Django
+  db:
+    image: postgres:17
     environment:
-      - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     ports:
-      - '8080:8080'
-      - '7077:7077'
+      - "5432:5432"
     volumes:
-      - ./vols/spark-data/models:/app/models
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ./django/.env
 
-  spark-worker:
-    image: bitnami/spark:3.5.1
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
-      - SPARK_WORKER_MEMORY=14G
-      - SPARK_WORKER_CORES=3
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
+  # Django app
+  django-music-recommender:
+    build:
+      context: ./django
+    container_name: django-music-recommender
+    ports:
+      - "8000:8000"
     depends_on:
-      - spark
-  
+      - db
+      - broker
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DEBUG: ${DEBUG}
+      DJANGO_LOGLEVEL: ${DJANGO_LOGLEVEL}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DATABASE_ENGINE: ${DATABASE_ENGINE}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+    env_file:
+      - ./django/.env
+    volumes:
+      - ./django:/app
+    command: python manage.py runserver 0.0.0.0:8000
 
+  # Kafka Broker (KRaft mode)
+  broker:
+    image: apache/kafka:4.0.0
+    hostname: broker
+    container_name: broker
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes:
+      - ./kafka/kafka-data:/tmp/kraft-combined-logs
+
+  # Inicialización de topics Kafka
+  init-kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - broker
+    entrypoint: [ "sh", "-c", "/init-scripts/create-topics.sh" ]
+    volumes:
+      - ./kafka/init-scripts:/init-scripts
+
+  # Kafka UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8085:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local-kafka
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=broker:29092
+    depends_on:
+      - broker
+
+  # # Spark (lo integramos también aquí)
+  # spark-master:
+  #   image: bitnami/spark:3.5.1
+  #   container_name: spark-master
+  #   environment:
+  #     - SPARK_MODE=master
+  #     - SPARK_USER=spark
+  #   ports:
+  #     - "8080:8080"
+  #     - "7077:7077"
+  #   volumes:
+  #     - ./spark/models:/app/models
+
+  # spark-worker:
+  #   image: bitnami/spark:3.5.1
+  #   container_name: spark-worker
+  #   environment:
+  #     - SPARK_MODE=worker
+  #     - SPARK_MASTER_URL=spark://spark-master:7077
+  #     - SPARK_WORKER_MEMORY=4G
+  #     - SPARK_WORKER_CORES=2
+  #     - SPARK_USER=spark
+  #   depends_on:
+  #     - spark-master
+
+volumes:
+  postgres_data:
