@@ -1,32 +1,44 @@
 services:
-  spark:
+  spark-master:
     image: bitnami/spark:3.5.1
+    container_name: spark-master
     environment:
       - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
+      - SPARK_LOCAL_IP=0.0.0.0
+      - SPARK_PUBLIC_DNS=192.168.1.130  # tu IP local
     ports:
-      - '8080:8080'
-      - '7077:7077'
-    volumes:
-      - ./vols/spark-data/models:/app/models
+      - "7077:7077"
+      - "8080:8080"
 
   spark-worker:
     image: bitnami/spark:3.5.1
+    depends_on:
+      - spark-master
     environment:
       - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
-      - SPARK_WORKER_MEMORY=14G
-      - SPARK_WORKER_CORES=3
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
-    depends_on:
-      - spark
-  
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=8G
+      - SPARK_WORKER_CORES=2
 
+  jupyter:
+    build: ./jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - PYSPARK_MASTER=spark://spark-master:7077
+      - JUPYTER_TOKEN=mario
+    depends_on:
+      - spark-master
+    volumes:
+      - ./notebooks:/app/notebooks
+      - millionsong-data:/opt/bitnami/spark/datasets
+
+    command: python -m jupyterlab --ip "0.0.0.0" --no-browser --NotebookApp.token=''
+
+volumes:
+  millionsong-data:
+    external: true
+
+networks:
+  default:
+    driver: bridge
