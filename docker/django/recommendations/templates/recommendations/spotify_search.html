@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spotify Feature Extractor</title>
+</head>
+<body>
+    <h1>Music Recommender 🎶</h1>
+
+    <form method="get">
+        <input type="text" name="query" placeholder="Enter song name" value="{{ query }}" required>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+
+    {% if features %}
+        <h2>Features for "{{ features.track_name }}" by {{ features.artist_name }}:</h2>
+        <ul>
+            <li>Tempo: {{ features.tempo }}</li>
+            <li>Loudness: {{ features.loudness }}</li>
+            <li>Duration: {{ features.duration }} sec</li>
+            <li>Key: {{ features.key }}</li>
+            <li>Mode: {{ features.mode }}</li>
+            <li>Time Signature: {{ features.time_signature }}</li>
+        </ul>
+    {% endif %}
+</body>
+</html>
