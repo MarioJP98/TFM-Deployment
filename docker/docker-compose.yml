@@ -99,7 +99,7 @@ services:
       - "8080:8080"
       - "7077:7077"
     volumes:
-      - ./spark/models:/app/models
+      - ./spark-consumer/models:/app/models
 
   spark-worker:
     image: bitnami/spark:3.5.1
@@ -114,20 +114,12 @@ services:
       - spark-master
   
   spark-recommender-consumer:
-    image: bitnami/spark:3.5.1
+    build:
+      context: ./spark
     container_name: spark-recommender-consumer
-    # depends_on:
-    #   - broker
-    environment:
-      - HOME=/tmp  # Añadimos esto
-      - SPARK_CONF_DIR=/opt/bitnami/spark/conf
-      - IVY_HOME=/tmp/.ivy2  # Configuramos Ivy en un directorio absoluto
-    volumes:
-      - ./spark-consumer:/app
-      - ./spark-models:/app/models
-      - ./ivy:/tmp/.ivy2  # Montamos un volumen para Ivy
-
-    entrypoint: ["/opt/bitnami/spark/bin/spark-submit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1", "/app/consumer.py"]
+    depends_on:
+      - broker
+      - spark-master
 
 volumes:
   postgres_data:
