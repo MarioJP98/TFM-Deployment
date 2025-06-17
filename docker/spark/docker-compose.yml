@@ -9,9 +9,12 @@ services:
     ports:
       - "7077:7077"
       - "8080:8080"
+    volumes:
+      - ./models:/models
 
   spark-worker:
     image: bitnami/spark:3.5.1
+    container_name: spark-worker
     depends_on:
       - spark-master
     environment:
@@ -19,24 +22,30 @@ services:
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_WORKER_MEMORY=8G
       - SPARK_WORKER_CORES=2
+    volumes:
+      - ./models:/models
 
   jupyter:
     build: ./jupyter
+    container_name: jupyter-spark
     ports:
       - "8888:8888"
     environment:
-      - PYSPARK_MASTER=spark://spark-master:7077
-      - JUPYTER_TOKEN=mario
+      - SPARK_HOME=/opt/spark-3.5.1-bin-hadoop3
+      - PYSPARK_PYTHON=python
+      - PYSPARK_DRIVER_PYTHON=python
+      - HOME=/app
     depends_on:
       - spark-master
     volumes:
       - ./notebooks:/app/notebooks
-      - millionsong-data:/opt/bitnami/spark/datasets
+      - millionsong_data:/opt/bitnami/spark/datasets
+      - ./models:/models
 
-    command: python -m jupyterlab --ip "0.0.0.0" --no-browser --NotebookApp.token=''
+    command: jupyter lab --ip=0.0.0.0 --no-browser --NotebookApp.token='' --allow-root
 
 volumes:
-  millionsong-data:
+  millionsong_data:
     external: true
 
 networks:
