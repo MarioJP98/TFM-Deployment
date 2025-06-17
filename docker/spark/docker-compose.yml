@@ -39,13 +39,13 @@ services:
       - spark-master
     volumes:
       - ./notebooks:/app/notebooks
-      - millionsong_data:/opt/bitnami/spark/datasets
+      - millionsong-data:/opt/bitnami/spark/datasets
       - ./models:/models
 
     command: jupyter lab --ip=0.0.0.0 --no-browser --NotebookApp.token='' --allow-root
 
 volumes:
-  millionsong_data:
+  millionsong-data:
     external: true
 
 networks:
