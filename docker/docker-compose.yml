@@ -123,6 +123,8 @@ services:
     depends_on:
       - broker
       - spark-master
+    volumes:
+      - ./spark/models:/app/models
 
 volumes:
   postgres_data:
