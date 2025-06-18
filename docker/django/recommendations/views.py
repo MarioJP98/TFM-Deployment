@@ -23,7 +23,9 @@ def recommend_view(request):
                 "duration": 200.512,
                 "key": 1,
                 "mode": 1,
-                "time_signature": 4
+                "time_signature": 4,
+                **{f"timbre_mean_{i}": 0.0 for i in range(12)},
+                **{f"timbre_std_{i}": 1.0 for i in range(12)}
             }
 
             # Publish the features to Kafka
