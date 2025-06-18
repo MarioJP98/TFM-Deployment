@@ -9,6 +9,9 @@ __pycache__/
 #Kafka
 kafka-data/
 
+#modelos
+music-recommender-model/
+
 # Django stuff:
 *.log
 local_settings.py
