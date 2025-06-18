@@ -1,32 +1,53 @@
 services:
-  spark:
+  spark-master:
     image: bitnami/spark:3.5.1
+    container_name: spark-master
     environment:
       - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
+      - SPARK_LOCAL_IP=0.0.0.0
+      - SPARK_PUBLIC_DNS=192.168.1.130  # tu IP local
     ports:
-      - '8080:8080'
-      - '7077:7077'
+      - "7077:7077"
+      - "8080:8080"
     volumes:
-      - ./vols/spark-data/models:/app/models
+      - ./models:/models
 
   spark-worker:
     image: bitnami/spark:3.5.1
+    container_name: spark-worker
+    depends_on:
+      - spark-master
     environment:
       - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
-      - SPARK_WORKER_MEMORY=14G
-      - SPARK_WORKER_CORES=3
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
-    depends_on:
-      - spark
-  
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=8G
+      - SPARK_WORKER_CORES=2
+    volumes:
+      - ./models:/models
 
+  jupyter:
+    build: ./jupyter
+    container_name: jupyter-spark
+    ports:
+      - "8888:8888"
+    environment:
+      - SPARK_HOME=/opt/spark-3.5.1-bin-hadoop3
+      - PYSPARK_PYTHON=python
+      - PYSPARK_DRIVER_PYTHON=python
+      - HOME=/app
+    depends_on:
+      - spark-master
+    volumes:
+      - ./notebooks:/app/notebooks
+      - millionsong-data:/opt/bitnami/spark/datasets
+      - ./models:/models
+
+    command: jupyter lab --ip=0.0.0.0 --no-browser --NotebookApp.token='' --allow-root
+
+volumes:
+  millionsong-data:
+    external: true
+
+networks:
+  default:
+    driver: bridge

@@ -88,30 +88,43 @@ services:
     depends_on:
       - broker
 
-  # # Spark (lo integramos también aquí)
-  # spark-master:
-  #   image: bitnami/spark:3.5.1
-  #   container_name: spark-master
-  #   environment:
-  #     - SPARK_MODE=master
-  #     - SPARK_USER=spark
-  #   ports:
-  #     - "8080:8080"
-  #     - "7077:7077"
-  #   volumes:
-  #     - ./spark/models:/app/models
+  # Spark (lo integramos también aquí)
+  spark-master:
+    image: bitnami/spark:3.5.1
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_USER=spark
+      - SPARK_LOCAL_IP=0.0.0.0
+      - SPARK_PUBLIC_DNS=192.168.1.130  # tu IP local
 
-  # spark-worker:
-  #   image: bitnami/spark:3.5.1
-  #   container_name: spark-worker
-  #   environment:
-  #     - SPARK_MODE=worker
-  #     - SPARK_MASTER_URL=spark://spark-master:7077
-  #     - SPARK_WORKER_MEMORY=4G
-  #     - SPARK_WORKER_CORES=2
-  #     - SPARK_USER=spark
-  #   depends_on:
-  #     - spark-master
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    volumes:
+      - ./spark-consumer/models:/app/models
+
+  spark-worker:
+    image: bitnami/spark:3.5.1
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=4G
+      - SPARK_WORKER_CORES=2
+      - SPARK_USER=spark
+    depends_on:
+      - spark-master
+
+  spark-recommender-consumer:
+    build:
+      context: ./spark
+    container_name: spark-recommender-consumer
+    depends_on:
+      - broker
+      - spark-master
+    volumes:
+      - ./spark/models:/app/models
 
 volumes:
   postgres_data:
