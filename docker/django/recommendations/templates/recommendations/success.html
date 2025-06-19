@@ -1,28 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Recommendation Submitted</title>
-</head>
-<body>
-    <h1>✅ Features sent successfully!</h1>
+<h1>Recomendación enviada</h1>
 
-    <h2>Song Details:</h2>
-    <ul>
-        <li><strong>Track:</strong> {{ features.track_name }}</li>
-        <li><strong>Artist:</strong> {{ features.artist }}</li>
-    </ul>
+<p>Buscando canciones similares a:</p>
+<ul>
+  <li><strong>Título:</strong> {{ features.track_name }}</li>
+  <li><strong>Artista:</strong> {{ features.artist }}</li>
+  <li><strong>Tempo:</strong> {{ features.tempo }}</li>
+  <li><strong>Loudness:</strong> {{ features.loudness }}</li>
+  <li><strong>Duración:</strong> {{ features.duration }} segundos</li>
+  <li><strong>Clave:</strong> {{ features.key }}</li>
+  <li><strong>Modo:</strong> {{ features.mode }}</li>
+  <li><strong>Compás:</strong> {{ features.time_signature }}/4</li>
+</ul>
 
-    <h2>Extracted Features:</h2>
-    <ul>
-        <li><strong>Tempo:</strong> {{ features.tempo }}</li>
-        <li><strong>Loudness:</strong> {{ features.loudness }}</li>
-        <li><strong>Duration:</strong> {{ features.duration }} seconds</li>
-        <li><strong>Key:</strong> {{ features.key }}</li>
-        <li><strong>Mode:</strong> {{ features.mode }}</li>
-        <li><strong>Time Signature:</strong> {{ features.time_signature }}</li>
-    </ul>
+<hr>
 
-    <a href="{% url 'index' %}">🔙 Back to search</a>
-</body>
-</html>
+<div id="results">
+  <p>Esperando recomendaciones...</p>
+</div>
+
+<script>
+  const recommendationId = "{{ recommendation_id }}";
+  const resultsDiv = document.getElementById("results");
+
+  async function fetchResults() {
+    const response = await fetch(`/results/${recommendationId}/`);
+    const data = await response.json();
+
+    if (data.recommendations.length > 0) {
+      resultsDiv.innerHTML = "<h3>Recomendaciones similares:</h3><ul>" +
+        data.recommendations.map(r => `<li>${r.artist} - ${r.title}</li>`).join('') +
+        "</ul>";
+    } else {
+      setTimeout(fetchResults, 3000);  // Reintenta si aún no hay datos
+    }
+  }
+
+  fetchResults();
+</script>
