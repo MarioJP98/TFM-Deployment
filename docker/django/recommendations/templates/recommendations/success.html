@@ -1,28 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Recommendation Submitted</title>
-</head>
-<body>
-    <h1>✅ Features sent successfully!</h1>
+<h1>Recomendación enviada</h1>
+<p>Esperando recomendaciones para <strong>{{ features.track_name }}</strong>...</p>
 
-    <h2>Song Details:</h2>
-    <ul>
-        <li><strong>Track:</strong> {{ features.track_name }}</li>
-        <li><strong>Artist:</strong> {{ features.artist }}</li>
-    </ul>
+<div id="results"></div>
 
-    <h2>Extracted Features:</h2>
-    <ul>
-        <li><strong>Tempo:</strong> {{ features.tempo }}</li>
-        <li><strong>Loudness:</strong> {{ features.loudness }}</li>
-        <li><strong>Duration:</strong> {{ features.duration }} seconds</li>
-        <li><strong>Key:</strong> {{ features.key }}</li>
-        <li><strong>Mode:</strong> {{ features.mode }}</li>
-        <li><strong>Time Signature:</strong> {{ features.time_signature }}</li>
-    </ul>
+<script>
+  const recommendationId = "{{ recommendation_id }}";
+  const resultsDiv = document.getElementById("results");
 
-    <a href="{% url 'index' %}">🔙 Back to search</a>
-</body>
-</html>
+  async function fetchResults() {
+    const response = await fetch(`/results/${recommendationId}/`);
+    const data = await response.json();
+
+    if (data.recommendations.length > 0) {
+      resultsDiv.innerHTML = "<h3>Recomendaciones:</h3><ul>" +
+        data.recommendations.map(r => `<li>${r.artist} - ${r.title}</li>`).join('') +
+        "</ul>";
+    } else {
+      setTimeout(fetchResults, 3000);  // Vuelve a intentar
+    }
+  }
+
+  fetchResults();
+</script>

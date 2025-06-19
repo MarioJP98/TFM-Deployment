@@ -1,5 +1,6 @@
 import json
-from kafka import KafkaProducer
+import time
+from kafka import KafkaProducer, KafkaConsumer
 import hashlib
 
 # Configuración del broker Kafka
@@ -75,6 +76,8 @@ def publish_song_features(features: dict):
 
         print("Features enviados correctamente a Kafka.")
 
+        return recommendation_id
+
     except InvalidPayloadError as e:
         print(f"Error de validación: {e}")
         raise
@@ -82,3 +85,33 @@ def publish_song_features(features: dict):
     except Exception as e:
         print(f"Error enviando a Kafka: {e}")
         raise
+
+
+def consume_recommendations_for_id(recommendation_id, timeout=10):
+    """
+    Escucha el topic de recomendaciones por un tiempo limitado y filtra por recommendation_id.
+    """
+    consumer = KafkaConsumer(
+        'music-recommendation-result',
+        bootstrap_servers=KAFKA_BROKER,
+        auto_offset_reset='latest',
+        enable_auto_commit=True,
+        group_id=None,
+        consumer_timeout_ms=timeout * 1000,
+        value_deserializer=lambda m: json.loads(m.decode('utf-8')),
+        key_deserializer=lambda k: k.decode('utf-8') if k else None
+    )
+
+    result = []
+    start_time = time.time()
+
+    for msg in consumer:
+        if msg.key == recommendation_id:
+            result.append(msg.value)
+
+        # Opcional: salir antes si ya tenemos 3 recomendaciones
+        if len(result) >= 3 or (time.time() - start_time) > timeout:
+            break
+
+    consumer.close()
+    return result
