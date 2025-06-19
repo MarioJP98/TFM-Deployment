@@ -2,6 +2,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, to_json, struct
 from pyspark.sql.types import StructType, StructField, DoubleType, StringType
 from pyspark.ml import PipelineModel
+from pyspark.sql.functions import lit
+
 
 # Crear sesión Spark
 spark = SparkSession.builder \
@@ -34,8 +36,12 @@ df = spark.readStream \
     .load()
 
 # Convertir de binario a string y parsear JSON
-df = df.selectExpr("CAST(value AS STRING) as json_str")
-parsed_df = df.select(from_json(col("json_str"), schema).alias("data")).select("data.*")
+df = df.selectExpr("CAST(key AS STRING) as recommendation_id", "CAST(value AS STRING) as json_str")
+parsed_df = df.select(
+    from_json(col("json_str"), schema).alias("data"),
+    col("recommendation_id")
+).select("data.*", "recommendation_id")
+
 
 # Cargar modelo entrenado
 model = PipelineModel.load("/app/models/music-recommender-model")
@@ -56,19 +62,26 @@ def process_batch(batch_df, batch_id):
             predictions.select("track_name", "cluster_id").show()
 
             predicted_cluster = predictions.select("cluster_id").first()["cluster_id"]
+            recommendation_id = batch_df.select("recommendation_id").first()["recommendation_id"]
+
 
             # Buscar canciones similares
             recommendations = clustered_songs.filter(
                 col("cluster_id") == predicted_cluster
             ).select("artist", "title").limit(3)
 
+            recommendations = recommendations.withColumn("recommendation_id", lit(recommendation_id))
+
+
             # Mostrar por consola
             print("\Recomendaciones similares:")
             recommendations.show()
 
             # Enviar recomendaciones a Kafka
-            kafka_ready = recommendations.withColumn("value", to_json(struct("artist", "title"))) \
-                                         .selectExpr("CAST(value AS STRING)")
+            kafka_ready = recommendations \
+                .withColumn("value", to_json(struct("artist", "title"))) \
+                .withColumn("key", col("recommendation_id")) \
+                .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
 
             kafka_ready.write \
                 .format("kafka") \

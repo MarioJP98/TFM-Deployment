@@ -62,13 +62,13 @@ def publish_song_features(features: dict):
 
         # Definimos la key (por ejemplo el nombre de la canción + artista)
         
-        song_id =  f"{features['track_name']}".encode('utf-8')
-        song_id = generate_song_id(features['track_name'], features['artist']).encode('utf-8')
+        recommendation_id =  f"{features['track_name']}".encode('utf-8')
+        recommendation_id = generate_song_id(features['track_name'], features['artist']).encode('utf-8')
 
         # Envío del mensaje
         producer.send(
             TOPIC_NAME,
-            key = song_id,
+            key = recommendation_id,
             value = features
         )
         producer.flush()
