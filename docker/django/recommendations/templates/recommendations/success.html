@@ -1,7 +1,22 @@
 <h1>Recomendación enviada</h1>
-<p>Esperando recomendaciones para <strong>{{ features.track_name }}</strong>...</p>
 
-<div id="results"></div>
+<p>Buscando canciones similares a:</p>
+<ul>
+  <li><strong>Título:</strong> {{ features.track_name }}</li>
+  <li><strong>Artista:</strong> {{ features.artist }}</li>
+  <li><strong>Tempo:</strong> {{ features.tempo }}</li>
+  <li><strong>Loudness:</strong> {{ features.loudness }}</li>
+  <li><strong>Duración:</strong> {{ features.duration }} segundos</li>
+  <li><strong>Clave:</strong> {{ features.key }}</li>
+  <li><strong>Modo:</strong> {{ features.mode }}</li>
+  <li><strong>Compás:</strong> {{ features.time_signature }}/4</li>
+</ul>
+
+<hr>
+
+<div id="results">
+  <p>Esperando recomendaciones...</p>
+</div>
 
 <script>
   const recommendationId = "{{ recommendation_id }}";
@@ -12,11 +27,11 @@
     const data = await response.json();
 
     if (data.recommendations.length > 0) {
-      resultsDiv.innerHTML = "<h3>Recomendaciones:</h3><ul>" +
+      resultsDiv.innerHTML = "<h3>Recomendaciones similares:</h3><ul>" +
         data.recommendations.map(r => `<li>${r.artist} - ${r.title}</li>`).join('') +
         "</ul>";
     } else {
-      setTimeout(fetchResults, 3000);  // Vuelve a intentar
+      setTimeout(fetchResults, 3000);  // Reintenta si aún no hay datos
     }
   }
 
