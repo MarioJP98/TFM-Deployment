@@ -125,6 +125,8 @@ services:
       - spark-master
     volumes:
       - ./spark/models:/app/models
+      - ./spark/spark-consumer:/app
+      - ./spark/fake_db:/app/data
 
 volumes:
   postgres_data:
