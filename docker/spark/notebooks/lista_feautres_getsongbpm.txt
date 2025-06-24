@@ -1,0 +1,13 @@
+Lista Final de Features para Entrenamiento
+Aquí están los features que deberías extraer con los getters del MSD para entrenar tu modelo, junto con sus equivalencias (cuando existen) en GetSongBPM:
+
+Categoría	MSD Getter	Feature	Tipo	Equivalente en GetSongBPM
+🎧 Tempo	get_tempo	tempo (BPM)	numérico	✅ tempo
+🎼 Clave	get_key + get_mode	key_of (Ej: Em)	categórico	✅ key_of + open_key
+🕒 Compás	get_time_signature	time_signature	categórico	✅ time_sig
+📢 Volumen	get_loudness	loudness	numérico	❌ no
+💃 Bailabilidad	get_danceability	danceability	numérico	✅ danceability
+🎶 Acústico	get_acousticness	acousticness	numérico	✅ acousticness
+⚡ Energía	get_energy	energy	numérico	❌ no
+📅 Año	get_year	year	numérico	✅ album.year
+🧠 Género / Estilo	get_artist_terms_weight	genre_vector	vector/categórico	✅ artist.genres (list)
