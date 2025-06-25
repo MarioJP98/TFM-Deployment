@@ -8,11 +8,41 @@ class GetSongBPMError(Exception):
     pass
 
 
-NOTE_TO_INT = {
-    "C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3,
-    "E": 4, "F": 5, "F#": 6, "Gb": 6, "G": 7, "G#": 8, "Ab": 8,
-    "A": 9, "A#": 10, "Bb": 10, "B": 11
+NOTE_TO_KEY = {
+    "C": 0, "C#": 1, "Db": 1,
+    "D": 2, "D#": 3, "Eb": 3,
+    "E": 4,"F": 5, "F#": 6,
+    "Gb": 6,"G": 7, "G#": 8,
+    "Ab": 8,"A": 9, "A#": 10,
+    "Bb": 10,"B": 11
 }
+
+
+def extract_key_mode(key_of):
+    key_of = key_of.strip().replace("♯", "#").replace("♭", "b")
+    if key_of[-1].lower() == 'm':
+        mode = 0
+        root = key_of[:-1]
+    else:
+        mode = 1
+        root = key_of
+    key = NOTE_TO_KEY.get(root, None)
+    return key, mode
+
+
+def estimate_acousticness_from_loudness(loudness):
+    # Escalado entre valores típicos del MSD: de -60 (muy bajo) a 0 dB
+    scaled = max(0, min(1, 1 - (loudness + 60) / 60))
+    return round(scaled, 2)
+
+
+def parse_time_signature(api_value):
+    try:
+        numerator = int(api_value.split('/')[0])
+        return numerator
+    except (ValueError, AttributeError):
+        return None  # o un valor por defecto como 4
+
 
 
 def parse_time_signature(ts_string):
