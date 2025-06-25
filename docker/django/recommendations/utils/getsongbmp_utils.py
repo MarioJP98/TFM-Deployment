@@ -60,7 +60,7 @@ def parse_key(key_str):
 
 
 def getsongbpm_feature_extractor(song_name):
-    BASE_URL = "https://api.getsong.co"
+    BASE_URL = "https://api.getsong.com"
     # api_key = settings.GETSONGBPM_API_KEY
     api_key = "49b847750ea5c1e95f54a348099eb988"
 
@@ -90,24 +90,12 @@ def getsongbpm_feature_extractor(song_name):
         features_response.raise_for_status()
         data = features_response.json()["song"]
 
-        print({"track_name": data.get("title"),
-               "artist_name": data.get("artist", {}).get("name"),
-               "tempo": data.get("tempo"),
-               "time_signature": parse_time_signature(data.get("time_sig")),
-               "key": parse_key(data.get("key_of")),
-               "open_key": data.get("open_key"),
-               "danceability": data.get("danceability"),
-               "acousticness": data.get("acousticness"),
-               "album_title": data.get("album", {}).get("title"),
-               "release_year": data.get("album", {}).get("year"),
-               "genres": data.get("artist", {}).get("genres", [])})
-
         return {
-            "track_name": data.get("title"),
+            "title": data.get("title"),
             "artist_name": data.get("artist", {}).get("name"),
             "tempo": data.get("tempo"),
-            "time_signature": parse_time_signature(data.get("time_sig")),
-            "key": parse_key(data.get("key_of")),
+            "time_signature": data.get("time_sig"),
+            "key": data.get("key_of"),
             "open_key": data.get("open_key"),
             "danceability": data.get("danceability"),
             "acousticness": data.get("acousticness"),
@@ -121,3 +109,19 @@ def getsongbpm_feature_extractor(song_name):
 
     except Exception as e:
         raise GetSongBPMError(f"Unexpected error: {e}")
+
+def refactor_getsongbpm_features(features):
+    """
+    Refactor the features from GetSongBPM to match the expected format.
+    """
+    return {
+        'song_id': GETTERS.get_song_id(h5).decode('utf-8'),
+        'title': GETTERS.get_title(h5).decode('utf-8'),
+        'artist': GETTERS.get_artist_name(h5).decode('utf-8'),
+        'tempo': float(GETTERS.get_tempo(h5)),
+        'key': float(GETTERS.get_key(h5)),
+        'mode': float(GETTERS.get_mode(h5)),
+        'time_signature': int(GETTERS.get_time_signature(h5)),
+        'loudness': float(GETTERS.get_loudness(h5)),
+        'danceability': float(GETTERS.get_danceability(h5))
+    }
