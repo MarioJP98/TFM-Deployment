@@ -26,9 +26,10 @@ def extract_features(path):
     except Exception as e:
         return None
 
-def main():
-    dataset_path = r"C:\Dataset\msd_targz\F\F"
-    output_dir = r"C:\Dataset\parquet\batches_F"
+def main(letter):
+    print(f"Procesando letra: {letter}")
+    dataset_path = fr"C:\Dataset\msd_targz\{letter}\{letter}"
+    output_dir = fr"C:\Dataset\parquet\batches_{letter}"
     batch_size = 5000
     num_workers = min(12, multiprocessing.cpu_count())
 
@@ -53,4 +54,5 @@ def main():
             print(f" Guardado: {batch_file} ({len(df_batch)} canciones)")
 
 if __name__ == "__main__":
-    main()
+    for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+        main(letter)
