@@ -12,5 +12,4 @@ spotipy==2.25.1
 sqlparse==0.5.3
 tzdata==2025.2
 urllib3==2.4.0
-
 kafka-python==2.2.11
