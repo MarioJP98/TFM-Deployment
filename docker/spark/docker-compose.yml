@@ -39,8 +39,11 @@ services:
       - spark-master
     volumes:
       - ./notebooks:/app/notebooks
-      - millionsong-data:/opt/bitnami/spark/datasets
+      # - millionsong-data:/opt/bitnami/spark/datasets # Vol con archivos H5
+      - ./dataset:/opt/bitnami/spark/datasets # Vol con archivos parquet
       - ./models:/models
+
+
 
     command: jupyter lab --ip=0.0.0.0 --no-browser --NotebookApp.token='' --allow-root
 
