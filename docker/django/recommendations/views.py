@@ -13,12 +13,13 @@ def index(request):
 def recommend_view(request):
     if request.method == "POST":
         song_name = request.POST.get('song_name', '')
+        artist_name = request.POST.get("artist_name", "")
 
         try:
             # Extract fetures from the spotify API
             # features = spotify_feature_extractor(song_name)
 
-            features = getsongbpm_feature_extractor(song_name)
+            features = getsongbpm_feature_extractor(song_name, artist_name)
             browser_context = request.session.get("browser_context", {})
 
             print("Refactored Features:", features)

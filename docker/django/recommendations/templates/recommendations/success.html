@@ -27,7 +27,9 @@
 
     if (data.recommendations.length > 0) {
       resultsDiv.innerHTML = "<h3>Recomendaciones similares:</h3><ul>" +
-        data.recommendations.map(r => `<li>${r.artist} - ${r.title}</li>`).join('') +
+        data.recommendations.map(r =>
+          `<li>${r.artist} - ${r.title} <br><small>Key: ${r.key}, Tempo: ${r.tempo} BPM</small></li>`
+        ).join('') +
         "</ul>";
     } else {
       setTimeout(fetchResults, 3000);  // Reintenta si aún no hay datos

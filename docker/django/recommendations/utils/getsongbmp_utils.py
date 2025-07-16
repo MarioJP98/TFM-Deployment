@@ -17,17 +17,29 @@ NOTE_TO_KEY = {
     "Bb": 10,"B": 11
 }
 
+
 def extract_key_mode(key_of):
+    if not key_of or not isinstance(key_of, str):
+        return None, None
+
+    # Normalizar y limpiar caracteres
     key_of = key_of.strip().replace("♯", "#").replace("♭", "b")
-    if key_of[-1].lower() == 'm':
+
+    # Determinar si es menor
+    if key_of.lower().endswith("m"):
         mode = 0
-        root = key_of[:-1]
+        root = key_of[:-1].strip()
     else:
         mode = 1
-        root = key_of
-    key = NOTE_TO_KEY.get(root, None)
-    return key, mode
+        root = key_of.strip()
 
+    key = NOTE_TO_KEY.get(root, None)
+
+    # Log si no se reconoce
+    if key is None:
+        print(f"[WARN] Nota no reconocida: {root}")
+
+    return key, mode
 
 def estimate_loudness_from_acousticness(acousticness):
     """
@@ -51,7 +63,7 @@ def refactor_getsongbpm_features(features_raw):
     Transforma las características brutas de la API GetSongBPM
     al formato esperado por el modelo de recomendación.
     """
-    key_str = features_raw.get("key", "C")
+    key_str = features_raw.get("key_of", "C")
     key, mode = extract_key_mode(key_str)
 
     time_signature = parse_time_signature(
@@ -81,17 +93,19 @@ def refactor_getsongbpm_features(features_raw):
     }
 
 
-def getsongbpm_feature_extractor(song_name):
+def getsongbpm_feature_extractor(song_name, artist_name):
     BASE_URL = "https://api.getsong.co"
     # api_key = settings.GETSONGBPM_API_KEY
     api_key = "49b847750ea5c1e95f54a348099eb988"
+
+    lookup = f"song:{song_name} artist:{artist_name}"
 
     try:
         # 1. Buscar canción
         search_params = {
             "api_key": api_key,
-            "type": "song",
-            "lookup": song_name,
+            "type": "both",
+            "lookup": lookup,
             "limit": 1,
         }
         response = requests.get(f"{BASE_URL}/search/", params=search_params)
@@ -103,7 +117,7 @@ def getsongbpm_feature_extractor(song_name):
 
         song = search_data["search"][0]
         song_id = song["id"]
-        time.sleep(5)
+        # time.sleep(5)
         # 2. Obtener características
         features_response = requests.get(f"{BASE_URL}/song/", params={
             "api_key": api_key,
