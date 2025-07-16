@@ -21,28 +21,13 @@ def recommend_view(request):
             features = getsongbpm_feature_extractor(song_name)
             browser_context = request.session.get("browser_context", {})
 
-
-
-            refactored_features = {
-                "track_name": features.get("track_name", ""),
-                "artist": features.get("artist_name", ""),
-                "tempo": int(features.get("tempo", 0.0)),
-                "loudness": int(features.get("loudness", 6)),
-                "duration": int(features.get("duration", 200.0)),
-                "key": features.get("key", 0) if features.get("key") is not None else 0,
-                "mode": features.get("mode", 1),
-                "time_signature": features.get("time_signature", 4),
-                **{f"timbre_mean_{i}": 0.0 for i in range(12)},
-                **{f"timbre_std_{i}": 1.0 for i in range(12)}
-            }
-            print("Refactored Features:", refactored_features)
+            print("Refactored Features:", features)
 
             # Publish the features to Kafka
-            recommendation_id = publish_song_features(refactored_features)
-
+            recommendation_id = publish_song_features(features)
 
             return render(request, "recommendations/success.html", {
-                "features": refactored_features,
+                "features": features,
                 "recommendation_id": str(recommendation_id, 'utf-8')
             })
 
