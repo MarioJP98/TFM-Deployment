@@ -60,9 +60,19 @@ def refactor_getsongbpm_features(features_raw):
     loudness = estimate_loudness_from_acousticness(
         float(features_raw.get("acousticness", 50)))
 
+    artist_data = features_raw.get("artist", {})
+    if isinstance(artist_data, dict):
+        artist_name = artist_data.get("name", "")
+    elif isinstance(artist_data, list) and len(artist_data) > 0 and isinstance(artist_data[0], dict):
+        artist_name = artist_data[0].get("name", "")
+    else:
+        artist_name = ""
+
+    print(features_raw)
+
     return {
         "track_name": features_raw.get("title", ""),
-        "artist_name": features_raw.get("artist_name", ""),
+        "artist_name": artist_name,
         "tempo": float(features_raw.get("tempo", 0.0)),
         "loudness": loudness,
         "key": key if key is not None else 0,
