@@ -1,18 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <title>Music Recommender</title>
+    <title>Recomendador Musical</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1e1e2f, #2c2c3e);
+            color: #f0f0f0;
+            padding: 2em;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffd369;
+        }
+
+        form {
+            background-color: #2f2f41;
+            padding: 2em;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            margin-top: 2em;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5em;
+            font-weight: bold;
+            color: #ffd369;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.8em;
+            border-radius: 6px;
+            border: none;
+            background-color: #39394d;
+            color: #f0f0f0;
+            margin-bottom: 1.5em;
+        }
+
+        button {
+            background-color: #ffd369;
+            color: #1e1e2f;
+            font-weight: bold;
+            padding: 0.8em 1.2em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #e6be5a;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Music Recommender 🎵</h1>
+    <h1>🎧 Music Recommender</h1>
+
     <form action="{% url 'recommend_view' %}" method="post">
         {% csrf_token %}
-        <label for="song_name">Enter song name:</label>
-        <input type="text" id="song_name" name="song_name" required><br><br>
-        <label for="artist_name">Enter artist name:</label>
-        <input type="text" id="artist_name" name="artist_name"><br><br>
-        <button type="submit">Get Recommendation</button>
+        <label for="song_name">Nombre de la canción:</label>
+        <input type="text" id="song_name" name="song_name" required>
+
+        <label for="artist_name">Nombre del artista (opcional):</label>
+        <input type="text" id="artist_name" name="artist_name">
+
+        <button type="submit">Obtener recomendación</button>
     </form>
 </body>
+
 </html>

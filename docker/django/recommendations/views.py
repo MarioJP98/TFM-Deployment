@@ -15,6 +15,7 @@ def recommend_view(request):
         song_name = request.POST.get('song_name', '')
         artist_name = request.POST.get("artist_name", "")
 
+
         try:
             # Extract fetures from the spotify API
             # features = spotify_feature_extractor(song_name)
@@ -39,6 +40,7 @@ def recommend_view(request):
             return render(request, "recommendations/error.html", {"error": f"Spotify API error: {e}"})
 
         except Exception as e:
+            print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
             return render(request, "recommendations/error.html", {"error": f"Internal error: {e}"})
 
     else:

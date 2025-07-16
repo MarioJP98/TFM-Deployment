@@ -1,11 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Error</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1e1e2f, #2c2c3e);
+            color: #f0f0f0;
+            padding: 2em;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #ff6b6b;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .error-box {
+            background-color: #3a3a4f;
+            border-left: 5px solid #ff6b6b;
+            padding: 1.5em;
+            border-radius: 10px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+            margin-top: 2em;
+        }
+
+        p {
+            font-size: 1.1em;
+            margin: 0;
+        }
+
+        a {
+            color: #ffd369;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Error:</h1>
-    <p>{{ error }}</p>
+
+    <h1>⚠️ Ocurrió un error</h1>
+
+    <div class="error-box">
+        <p>{{ error }}</p>
+    </div>
+
+    <p style="text-align:center; margin-top: 2em;">
+        <a href="/">← Volver al inicio</a>
+    </p>
+
 </body>
+
 </html>

@@ -1,40 +1,108 @@
-<h1>Recomendación enviada</h1>
+<!DOCTYPE html>
+<html lang="en">
 
-<p>Buscando canciones similares a:</p>
-<ul>
-  <li><strong>Título:</strong> {{ features.track_name }}</li>
-  <li><strong>Artista:</strong> {{ features.artist_name }}</li>
-  <li><strong>Tempo:</strong> {{ features.tempo }}</li>
-  <li><strong>Loudness:</strong> {{ features.loudness }}</li>
-  <li><strong>Clave:</strong> {{ features.key }}</li>
-  <li><strong>Modo:</strong> {{ features.mode }}</li>
-  <li><strong>Compás:</strong> {{ features.time_signature }}/4</li>
-</ul>
-
-<hr>
-
-<div id="results">
-  <p>Esperando recomendaciones...</p>
-</div>
-
-<script>
-  const recommendationId = "{{ recommendation_id }}";
-  const resultsDiv = document.getElementById("results");
-
-  async function fetchResults() {
-    const response = await fetch(`/results/${recommendationId}/`);
-    const data = await response.json();
-
-    if (data.recommendations.length > 0) {
-      resultsDiv.innerHTML = "<h3>Recomendaciones similares:</h3><ul>" +
-        data.recommendations.map(r =>
-          `<li>${r.artist} - ${r.title} <br><small>Key: ${r.key}, Tempo: ${r.tempo} BPM</small></li>`
-        ).join('') +
-        "</ul>";
-    } else {
-      setTimeout(fetchResults, 3000);  // Reintenta si aún no hay datos
+<head>
+  <meta charset="UTF-8">
+  <title>Recomendación enviada</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e1e2f, #2c2c3e);
+      color: #f0f0f0;
+      padding: 2em;
+      max-width: 600px;
+      margin: auto;
     }
-  }
 
-  fetchResults();
-</script>
+    h1 {
+      text-align: center;
+      color: #ffd369;
+    }
+
+    ul {
+      background-color: #2f2f41;
+      padding: 1.5em;
+      border-radius: 10px;
+      list-style: none;
+      margin-top: 1em;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    }
+
+    li {
+      margin-bottom: 0.8em;
+      border-bottom: 1px solid #555;
+      padding-bottom: 0.5em;
+    }
+
+    li:last-child {
+      border-bottom: none;
+    }
+
+    strong {
+      color: #ffd369;
+    }
+
+    #results {
+      margin-top: 2em;
+      background-color: #39394d;
+      padding: 1.5em;
+      border-radius: 8px;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+    }
+
+    h3 {
+      color: #a5d6a7;
+      margin-top: 0;
+    }
+
+    small {
+      color: #bbb;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>🎶 Recomendación enviada</h1>
+
+  <p>Buscando canciones similares a:</p>
+  <ul>
+    <li><strong>Título:</strong> {{ features.track_name }}</li>
+    <li><strong>Artista:</strong> {{ features.artist_name }}</li>
+    <li><strong>Tempo:</strong> {{ features.tempo }} BPM</li>
+    <li><strong>Loudness:</strong> {{ features.loudness }} dB</li>
+    <li><strong>Clave:</strong> {{ features.key }}</li>
+    <li><strong>Modo:</strong> {{ features.mode }}</li>
+    <li><strong>Compás:</strong> {{ features.time_signature }}/4</li>
+  </ul>
+
+  <div id="results">
+    <p>Esperando recomendaciones...</p>
+  </div>
+
+  <script>
+    const recommendationId = "{{ recommendation_id }}";
+    const resultsDiv = document.getElementById("results");
+
+    async function fetchResults() {
+      const response = await fetch(`/results/${recommendationId}/`);
+      const data = await response.json();
+
+      if (data.recommendations.length > 0) {
+        resultsDiv.innerHTML = "<h3>Recomendaciones similares:</h3><ul>" +
+          data.recommendations.map(r =>
+            // `<li>${r.artist} - ${r.title}<br><small>Key: ${r.key}, Tempo: ${r.tempo} BPM</small></li>`
+            `<li><strong>${r.title}</strong> by ${r.artist}<br></li>`
+          ).join('') +
+          "</ul>";
+      } else {
+        setTimeout(fetchResults, 3000);  // Reintenta si aún no hay datos
+      }
+    }
+
+    fetchResults();
+  </script>
+
+</body>
+
+</html>
