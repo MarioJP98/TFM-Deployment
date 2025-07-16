@@ -6,11 +6,15 @@
 </head>
 <body>
     <h1>Music Recommender 🎵</h1>
-    
+
     <form method="post">
         {% csrf_token %}
-        <label for="song_name">Enter a song name:</label>
-        <input type="text" id="song_name" name="song_name" required>
+        <label for="song_name">Enter a song name:</label><br>
+        <input type="text" id="song_name" name="song_name" required><br><br>
+
+        <label for="artist_name">Enter artist name:</label><br>
+        <input type="text" id="artist_name" name="artist_name"><br><br>
+
         <button type="submit">Get Recommendation</button>
     </form>
 
@@ -20,3 +24,6 @@
     {% endif %}
 </body>
 </html>
+
+
+

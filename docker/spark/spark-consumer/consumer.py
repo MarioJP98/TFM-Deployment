@@ -5,6 +5,8 @@ from pyspark.ml.feature import VectorAssembler, StandardScalerModel
 from pyspark.ml.clustering import KMeansModel
 from pyspark.ml.functions import vector_to_array, array_to_vector
 import math
+from pyspark.sql.functions import udf, abs as sql_abs
+from pyspark.sql.types import StringType
 
 # Spark Session
 spark = SparkSession.builder \
@@ -116,12 +118,63 @@ def process_batch(batch_df, batch_id):
 
             recommendations = recommendations.withColumn(
                 "recommendation_id", lit(recommendation_id))
+            ###################################################################### BLOQUE CAMELOT
+            # 1. UDF para convertir a Camelot
+            def to_camelot(key, mode):
+                key = int(key)
+                mode = int(mode)
+                major_map = {
+                    0: "8B", 1: "3B", 2: "10B", 3: "5B", 4: "12B", 5: "7B",
+                    6: "2B", 7: "9B", 8: "4B", 9: "11B", 10: "6B", 11: "1B"
+                }
+                minor_map = {
+                    0: "5A", 1: "12A", 2: "7A", 3: "2A", 4: "9A", 5: "4A",
+                    6: "11A", 7: "6A", 8: "1A", 9: "8A", 10: "3A", 11: "10A"
+                }
+                return major_map.get(key) if mode == 1 else minor_map.get(key)
+
+
+            camelot_udf = udf(to_camelot, StringType())
+
+            # 2. Agregar camelot al input y a las canciones del cluster
+            predictions = predictions.withColumn("camelot", camelot_udf("key", "mode"))
+            input_row = predictions.select("tempo", "camelot").first()
+            input_tempo = input_row["tempo"]
+            input_camelot = input_row["camelot"]
+
+            # 3. Agregar camelot a las canciones clusterizadas
+            songs_in_cluster = clustered_songs.filter(
+                col("cluster_id") == predicted_cluster
+            ).withColumn("camelot", camelot_udf("key", "mode"))
+
+            # 4. Define vecinos válidos Camelot
+            def camelot_neighbors(camelot_key):
+                num = int(camelot_key[:-1])
+                scale = camelot_key[-1]
+                neighbors = [camelot_key]
+                neighbors.append(f"{num - 1 if num > 1 else 12}{scale}")
+                neighbors.append(f"{num + 1 if num < 12 else 1}{scale}")
+                neighbors.append(f"{num}{'B' if scale == 'A' else 'A'}")  # relative
+                return neighbors
+
+
+            valid_camelot = camelot_neighbors(input_camelot)
+
+            # 5. Filtrar por key compatible y tempo más cercano
+            filtered = songs_in_cluster.filter(col("camelot").isin(valid_camelot)) \
+                .withColumn("tempo_diff", sql_abs(col("tempo") - lit(input_tempo))) \
+                .orderBy("tempo_diff") \
+                .limit(1)
+
+            recommendations = filtered.withColumn("recommendation_id", lit(recommendation_id)) \
+                .select("artist", "title", "tempo", "key", "recommendation_id")
+            ################################################################################################
 
             print("Canciones similares encontradas.")
             print("comienzo a enviar a Kafka")
             # F. Enviar a Kafka
             kafka_ready = recommendations \
-                .withColumn("value", to_json(struct("artist", "title"))) \
+                .withColumn("value", to_json(struct("artist", "title","tempo","key"))) \
                 .withColumn("key", col("recommendation_id")) \
                 .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
 
