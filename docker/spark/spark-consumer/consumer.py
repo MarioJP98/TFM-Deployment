@@ -1,16 +1,17 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, to_json, struct, lit, sin, cos, when, expr
+from pyspark.sql.functions import from_json, col, to_json, struct, lit, sin, cos, when, expr, array
 from pyspark.sql.types import StructType, StructField, DoubleType, StringType
 from pyspark.ml.feature import VectorAssembler, StandardScalerModel
 from pyspark.ml.clustering import KMeansModel
 from pyspark.ml.functions import vector_to_array, array_to_vector
 import math
 
-# 1. Crear sesión Spark
+# Spark Session
 spark = SparkSession.builder \
     .appName("MusicRecommenderConsumer") \
     .config("spark.sql.streaming.checkpointLocation", "/tmp/checkpoints") \
     .getOrCreate()
+print(spark.version)
 
 # 2. Esquema esperado (solo columnas necesarias para el modelo)
 schema = StructType([
@@ -31,7 +32,8 @@ df = spark.readStream \
     .option("startingOffsets", "latest") \
     .load()
 
-# 4. Parsear JSON
+
+# Convertir de binario a string y parsear JSON
 df = df.selectExpr("CAST(key AS STRING) as recommendation_id",
                    "CAST(value AS STRING) as json_str")
 parsed_df = df.select(
@@ -46,18 +48,24 @@ scaler_model = StandardScalerModel.load(
     "/app/models/music-recommender-model/scaler")
 kmeans_model = KMeansModel.load("/app/models/music-recommender-model/kmeans")
 
+print("Modelos cargados correctamente.")
 # 6. Cargar canciones clusterizadas
 clustered_songs = spark.read.csv(
     "/app/data/songs_with_cluster.csv", header=True, inferSchema=True)
 
+print("Canciones clusterizadas cargadas correctamente.")
+
+print("antes del batch")
 # 7. Proceso por batch
-
-
 def process_batch(batch_df, batch_id):
     try:
         print(f"\n--- Batch {batch_id} ---")
+        batch_df.printSchema()
+        batch_df.show()
+        print("ENTRO al batch")
 
         if batch_df.count() > 0:
+            print("Procesando batch...")
             # A. Preprocesamiento de columnas (igual que en entrenamiento)
             df_trans = batch_df \
                 .filter((col("tempo") >= 40) & (col("tempo") <= 250)) \
@@ -67,16 +75,30 @@ def process_batch(batch_df, batch_id):
                 .withColumn("loudness_pos", col("loudness") + 60) \
                 .withColumn("mode_major", when(col("mode") == 1, 1).otherwise(0))
 
+            print("Preprocesamiento completado.")
             # B. Aplicar ensamblado y escalado
             assembled = assembler.transform(df_trans)
             scaled = scaler_model.transform(assembled)
 
-            # C. Aplicar pesos
-            weights = [4.5, 1.0, 5.0, 5.0, 0.5, 0.5]
-            weighted_expr = f"transform(vector_to_array(scaled_features), (x, i) -> x * array({','.join(map(str, weights))})[i])"
-            weighted = scaled.withColumn(
-                "weighted_scaled_features", array_to_vector(expr(weighted_expr)))
+            print("Ensamblado y escalado completados.")
 
+
+            # C. Aplicar pesos
+            # C. Aplicar pesos con PySpark puro
+            weights = [4.5, 1.0, 5.0, 5.0, 0.5, 0.5]
+
+            # Convertir el vector en array
+            scaled = scaled.withColumn(
+                "scaled_array", vector_to_array(col("scaled_features")))
+
+            # Multiplicar cada componente por su peso
+            weighted_cols = [col("scaled_array")[i] * lit(w)
+                            for i, w in enumerate(weights)]
+
+            # Reconvertir a vector
+            weighted = scaled.withColumn(
+                "weighted_scaled_features", array_to_vector(array(*weighted_cols)))
+            print("Pesos aplicados.")
             # D. Predecir con KMeans
             predictions = kmeans_model.transform(weighted)
             predictions.select("track_name", "cluster_id").show()
@@ -86,6 +108,7 @@ def process_batch(batch_df, batch_id):
             recommendation_id = batch_df.select("recommendation_id").first()[
                 "recommendation_id"]
 
+            print("Predicción de cluster realizada.")
             # E. Buscar canciones similares
             recommendations = clustered_songs.filter(
                 col("cluster_id") == predicted_cluster
@@ -94,6 +117,8 @@ def process_batch(batch_df, batch_id):
             recommendations = recommendations.withColumn(
                 "recommendation_id", lit(recommendation_id))
 
+            print("Canciones similares encontradas.")
+            print("comienzo a enviar a Kafka")
             # F. Enviar a Kafka
             kafka_ready = recommendations \
                 .withColumn("value", to_json(struct("artist", "title"))) \
@@ -105,6 +130,7 @@ def process_batch(batch_df, batch_id):
                 .option("kafka.bootstrap.servers", "broker:29092") \
                 .option("topic", "music-recommendation-result") \
                 .save()
+            print("Recomendaciones enviadas a Kafka.")
 
             print("\nRecomendaciones enviadas:")
             recommendations.show()

@@ -17,7 +17,6 @@ NOTE_TO_KEY = {
     "Bb": 10,"B": 11
 }
 
-
 def extract_key_mode(key_of):
     key_of = key_of.strip().replace("♯", "#").replace("♭", "b")
     if key_of[-1].lower() == 'm':
@@ -30,18 +29,11 @@ def extract_key_mode(key_of):
     return key, mode
 
 
-def estimate_acousticness_from_loudness(loudness):
-    # Escalado entre valores típicos del MSD: de -60 (muy bajo) a 0 dB
-    scaled = max(0, min(1, 1 - (loudness + 60) / 60))
-    return round(scaled, 2)
-
-
-def parse_time_signature(api_value):
-    try:
-        numerator = int(api_value.split('/')[0])
-        return numerator
-    except (ValueError, AttributeError):
-        return None  # o un valor por defecto como 4
+def estimate_loudness_from_acousticness(acousticness):
+    """
+    Estima loudness en escala [-60, 0] a partir de acousticness [0,100]
+    """
+    return round((1 - acousticness / 100) * 60 - 60, 2)
 
 
 
@@ -53,14 +45,34 @@ def parse_time_signature(ts_string):
         return None
 
 
-def parse_key(key_str):
-    """Convierte 'B' → 11, etc."""
-    return NOTE_TO_INT.get(key_str.upper(), None)
 
+def refactor_getsongbpm_features(features_raw):
+    """
+    Transforma las características brutas de la API GetSongBPM
+    al formato esperado por el modelo de recomendación.
+    """
+    key_str = features_raw.get("key", "C")
+    key, mode = extract_key_mode(key_str)
+
+    time_signature = parse_time_signature(
+        features_raw.get("time_signature", "4/4"))
+
+    loudness = estimate_loudness_from_acousticness(
+        float(features_raw.get("acousticness", 50)))
+
+    return {
+        "track_name": features_raw.get("title", ""),
+        "artist_name": features_raw.get("artist_name", ""),
+        "tempo": float(features_raw.get("tempo", 0.0)),
+        "loudness": loudness,
+        "key": key if key is not None else 0,
+        "mode": mode if mode is not None else 1,
+        "time_signature": time_signature if time_signature is not None else 4,
+    }
 
 
 def getsongbpm_feature_extractor(song_name):
-    BASE_URL = "https://api.getsong.com"
+    BASE_URL = "https://api.getsong.co"
     # api_key = settings.GETSONGBPM_API_KEY
     api_key = "49b847750ea5c1e95f54a348099eb988"
 
@@ -90,38 +102,10 @@ def getsongbpm_feature_extractor(song_name):
         features_response.raise_for_status()
         data = features_response.json()["song"]
 
-        return {
-            "title": data.get("title"),
-            "artist_name": data.get("artist", {}).get("name"),
-            "tempo": data.get("tempo"),
-            "time_signature": data.get("time_sig"),
-            "key": data.get("key_of"),
-            "open_key": data.get("open_key"),
-            "danceability": data.get("danceability"),
-            "acousticness": data.get("acousticness"),
-            "album_title": data.get("album", {}).get("title"),
-            "release_year": data.get("album", {}).get("year"),
-            "genres": data.get("artist", {}).get("genres", [])
-        }
+        return refactor_getsongbpm_features(data)
 
     except requests.RequestException as e:
         raise GetSongBPMError(f"Request failed: {e}")
 
     except Exception as e:
         raise GetSongBPMError(f"Unexpected error: {e}")
-
-def refactor_getsongbpm_features(features):
-    """
-    Refactor the features from GetSongBPM to match the expected format.
-    """
-    return {
-        'song_id': GETTERS.get_song_id(h5).decode('utf-8'),
-        'title': GETTERS.get_title(h5).decode('utf-8'),
-        'artist': GETTERS.get_artist_name(h5).decode('utf-8'),
-        'tempo': float(GETTERS.get_tempo(h5)),
-        'key': float(GETTERS.get_key(h5)),
-        'mode': float(GETTERS.get_mode(h5)),
-        'time_signature': int(GETTERS.get_time_signature(h5)),
-        'loudness': float(GETTERS.get_loudness(h5)),
-        'danceability': float(GETTERS.get_danceability(h5))
-    }
