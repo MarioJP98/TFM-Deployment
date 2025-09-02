@@ -30,6 +30,8 @@ services:
     container_name: jupyter-spark
     ports:
       - "8888:8888"
+    mem_limit: 16g     # RAM para el contenedor Jupyter
+    cpus: 4.0          # CPUs asignadas al contenedor
     environment:
       - SPARK_HOME=/opt/spark-3.5.1-bin-hadoop3
       - PYSPARK_PYTHON=python

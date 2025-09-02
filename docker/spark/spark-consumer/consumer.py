@@ -13,7 +13,6 @@ spark = SparkSession.builder \
     .appName("MusicRecommenderConsumer") \
     .config("spark.sql.streaming.checkpointLocation", "/tmp/checkpoints") \
     .getOrCreate()
-print(spark.version)
 
 # 2. Esquema esperado (solo columnas necesarias para el modelo)
 schema = StructType([
