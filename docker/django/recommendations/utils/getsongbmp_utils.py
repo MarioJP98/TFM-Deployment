@@ -96,7 +96,7 @@ def refactor_getsongbpm_features(features_raw):
 def getsongbpm_feature_extractor(song_name, artist_name):
     BASE_URL = "https://api.getsong.co"
     # api_key = settings.GETSONGBPM_API_KEY
-    api_key = "49b847750ea5c1e95f54a348099eb988"
+    api_key = ""
 
     lookup = f"song:{song_name} artist:{artist_name}"
 
