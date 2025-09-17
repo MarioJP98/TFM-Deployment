@@ -17,7 +17,7 @@ def recommend_view(request):
 
 
         try:
-            # Extract fetures from the spotify API
+            # Extract fetures from the spotify API NOT WORKING
             # features = spotify_feature_extractor(song_name)
 
             features = getsongbpm_feature_extractor(song_name, artist_name)
@@ -40,7 +40,6 @@ def recommend_view(request):
             return render(request, "recommendations/error.html", {"error": f"Spotify API error: {e}"})
 
         except Exception as e:
-            print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
             return render(request, "recommendations/error.html", {"error": f"Internal error: {e}"})
 
     else:
