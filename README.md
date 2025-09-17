@@ -25,6 +25,3 @@ Este repositorio contiene el código, notebooks y configuración necesarios rela
   Archivos de configuración necesarios para el **despliegue con Docker**.
   Cada subcarpeta está asociada al despliegue de un componente específico del proyecto.
   Se incluyen la definición de imágenes, instalación de dependencias y variables de entorno necesarias.
-
-- **`.gitignore`**
-  Fichero de configuración de Git que indica qué archivos y directorios deben ignorarse en el control de versiones.
