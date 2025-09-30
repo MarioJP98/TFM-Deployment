@@ -16,7 +16,7 @@ from pyspark.sql import functions as F
 # ---------- Config ----------
 TOP_C = 2          # nº de clusters a expandir
 TOP_N = 200        # nº de candidatos iniciales tras coseno
-K_FINAL = 50       # tamaño final tras MMR
+K_FINAL = 10       # tamaño final tras MMR
 LAMBDA_REL = 0.7   # trade-off relevancia/diversidad
 
 # ---------- Utilidades ----------
