@@ -121,6 +121,7 @@ services:
   spark-recommender-consumer:
     build:
       context: ./spark
+      dockerfile: Dockerfile
     container_name: spark-recommender-consumer
     depends_on:
       - broker

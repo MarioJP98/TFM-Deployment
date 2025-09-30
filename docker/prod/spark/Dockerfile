@@ -5,7 +5,7 @@ USER root
 RUN apt-get update && apt-get install -y python3-pip
 
 # Instalamos pip para pyspark + kafka dependencies (opcional si no están)
-RUN pip3 install numpy pandas kafka-python
+RUN pip3 install numpy pandas kafka-python joblib scikit-learn pyarrow
 
 # Copiamos el consumer y el modelo dentro del contenedor (Esta comentado por montarlo como volumen)
 # COPY spark-consumer/ /app/

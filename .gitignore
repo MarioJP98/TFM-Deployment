@@ -11,6 +11,7 @@ kafka-data/
 
 #modelos
 music-recommender-model/
+fake_db/
 
 # Django stuff:
 *.log
