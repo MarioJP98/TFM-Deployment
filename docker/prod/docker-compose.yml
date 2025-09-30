@@ -18,6 +18,8 @@ services:
   django-music-recommender:
     build:
       context: ./django
+      dockerfile: Dockerfile
+
     container_name: django-music-recommender
     ports:
       - "8000:8000"
